@@ -1,0 +1,62 @@
+IZennoList lstId = project.Lists["id"];
+IZennoList lstLog = project.Lists["log"];
+int skolkolaikat = Convert.ToInt32(project.Variables["skolko_laikat"].Value);
+int vremya = Convert.ToInt32(project.Variables["vremya"].Value);
+int vremya1 = Convert.ToInt32(project.Variables["vremya1"].Value);
+string strFirstElement = string.Empty;
+string strLogin = project.Variables["login"].Value;
+string strPass = project.Variables["pass"].Value;
+string strComment = project.Variables["textComment"].Value;
+string strSpin = string.Empty;
+Tab Tab1 = instance.ActiveTab;
+
+Random rnd = new Random();
+
+foreach (string strIDUrl in lstLog) {
+	if (lstId.Contains(strIDUrl)) lstId.Remove(strIDUrl);
+}
+for (int i=0; i<skolkolaikat; i++) {
+	if (lstId.Count==0) {
+		project.SendInfoToLog("Закончились ID в списке, спарсите аудиторию и повторите попытку снова",true);
+		return "oki";
+	}
+	int RND = rnd.Next(0, lstId.Count);
+	strFirstElement = lstId[RND];
+	lstId.RemoveAt(RND);
+	Tab1.Navigate("https://www.instagram.com/" + strFirstElement);
+	Tab1.WaitDownloading();
+	Tab1.FindElementByXPath("//button[text()='Follow' or text()='Подписаться']", 0).Click();
+	Thread.Sleep(rnd.Next(1000, 5000));
+//	HtmlElement kopkaImg1 = Tab1.FindElementByXPath("//div[contains(@class, '_ovg3g')]", 0);
+//	kopkaImg1.RiseEvent("Click", "Full"); 
+//	Tab1.FindElementByXPath("//span[contains(@class,'coreSpriteHeartOpen')]", 0).Click();
+//	Thread.Sleep(rnd.Next(1000, 5000));
+//	HtmlElement kopkaImg2 = Tab1.FindElementByXPath("//div[contains(@class, '_ovg3g')]", 1);
+//	kopkaImg2.RiseEvent("Click", "Full"); 
+//	Tab1.FindElementByXPath("//span[contains(@class,'coreSpriteHeartOpen')]", 0).Click();
+//	Thread.Sleep(rnd.Next(1000, 5000));		
+//	HtmlElement kopkaImg3 = Tab1.FindElementByXPath("//div[contains(@class, '_ovg3g')]", 2);
+//	kopkaImg3.RiseEvent("Click", "Full"); 
+	for (int t=0; t<3; t++) {
+	if (!Tab1.FindElementByXPath("//header/following-sibling::div/div[1]/div[1]/descendant::a/div",0).IsVoid) {
+		Tab1.FindElementByXPath("//header/following-sibling::div/div[1]/div[1]/descendant::a/div",t).Click();
+		Thread.Sleep(3000);
+		Tab1.FindElementByXPath("//span[contains(@class,'coreSpriteHeartOpen')]", 0).Click();
+		Thread.Sleep(3000);
+		if (strComment!=string.Empty) {
+			strComment = project.Variables["textComment"].Value;
+			strSpin = Macros.TextProcessing.Spintax(strComment);
+			Tab1.FindElementByXPath("//form/textarea",0).SetValue(strSpin,"Full");
+			instance.WaitFieldEmulationDelay();
+			instance.SendText("{ENTER}", 15);
+			Thread.Sleep(2000);
+		}
+		Tab1.FindElementByXPath("//article/ancestor::div/following-sibling::button", 0).Click();
+		Thread.Sleep(3000);
+		Thread.Sleep(rnd.Next(vremya, vremya1)*1000);
+		}
+	}
+	lstLog.Add(strFirstElement);
+}
+//Сохраняю профиль
+project.Profile.Save(project.Directory + @"\Insta+\Cookie\" + strLogin + ".zpprofile", true, true, true, true, true); //сохранить профиль
